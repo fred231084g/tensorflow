@@ -24,6 +24,7 @@ limitations under the License.
 #include <utility>
 #include <variant>
 
+#include "absl/algorithm/container.h"
 #include "absl/log/check.h"
 #include "absl/strings/string_view.h"
 #include "xla/shape.h"
@@ -115,6 +116,15 @@ class OriginalValue {
       return EmptyOriginalValueTupleTree().leaves();
     }
     return mutable_tree()->leaves();
+  }
+
+  bool IsEmpty() const {
+    if (is_synthetic_call()) {
+      return true;
+    }
+    return std::all_of(
+        tree().leaves().begin(), tree().leaves().end(),
+        [](const auto& pair) { return !pair.second.has_value(); });
   }
 
   bool operator==(const OriginalValue& other) const;
