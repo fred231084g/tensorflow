@@ -20,40 +20,14 @@ limitations under the License.
 #include <gtest/gtest.h>
 #include "xla/hlo/ir/hlo_opcode.h"
 #include "xla/service/gpu/gpu_device_info_for_tests.h"
+#include "xla/service/gpu/model/hlo_op_profiles_data.h"
+#include "xla/stream_executor/cuda/cuda_compute_capability.h"
 #include "xla/stream_executor/device_description.h"
 #include "xla/xla_data.pb.h"
 
 namespace xla {
 namespace gpu {
 namespace {
-
-constexpr char kDeviceHloOpProfiles[] = R"pb(
-  entries {
-    key: "sm_90"
-    value {
-      entries {
-        instruction {
-          opcode: "divide"
-          shape { element_type: F32 }
-        }
-        clock_cycles: 32
-      }
-    }
-  }
-
-  entries {
-    key: "sm_80"
-    value {
-      entries {
-        instruction {
-          opcode: "multiply"
-          shape { element_type: F32 }
-        }
-        clock_cycles: 64
-      }
-    }
-  }
-)pb";
 
 using HloOpProfilesTest = ::testing::Test;
 
@@ -68,7 +42,7 @@ TEST_F(HloOpProfilesTest, GetProfile) {
       std::make_pair(HloOpcode::kDivide, PrimitiveType::F32)));
   EXPECT_EQ(
       op_profile.at(std::make_pair(HloOpcode::kDivide, PrimitiveType::F32)),
-      32);
+      19);
 }
 
 TEST_F(HloOpProfilesTest, GetProfileDefault) {
@@ -80,10 +54,24 @@ TEST_F(HloOpProfilesTest, GetProfileDefault) {
   // hlo_op_profiles only has sm_80 and sm_90, should return the default sm_80.
   const auto& op_profile = hlo_op_profiles->GetProfile(device_info_sm_85);
   ASSERT_TRUE(op_profile.contains(
+      std::make_pair(HloOpcode::kDivide, PrimitiveType::F64)));
+  EXPECT_EQ(
+      op_profile.at(std::make_pair(HloOpcode::kDivide, PrimitiveType::F64)),
+      831);
+}
+
+TEST_F(HloOpProfilesTest, GetProfileH100) {
+  auto hlo_op_profiles = HloOpProfiles::Load(kDeviceHloOpProfiles,
+                                             /*default_profile_name=*/"sm_100");
+  auto device_info_sm_85 = TestGpuDeviceInfo::RTXH100SXMDeviceInfo(
+      stream_executor::CudaComputeCapability(9, 0));
+
+  const auto& op_profile = hlo_op_profiles->GetProfile(device_info_sm_85);
+  ASSERT_TRUE(op_profile.contains(
       std::make_pair(HloOpcode::kMultiply, PrimitiveType::F32)));
   EXPECT_EQ(
       op_profile.at(std::make_pair(HloOpcode::kMultiply, PrimitiveType::F32)),
-      64);
+      3);
 }
 
 }  // namespace
