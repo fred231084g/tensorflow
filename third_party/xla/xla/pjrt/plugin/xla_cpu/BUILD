@@ -14,8 +14,11 @@ cc_library(
     hdrs = ["xla_cpu_pjrt_client.h"],
     deps = [
         ":cpu_client_options",
+        "//xla/pjrt:pjrt_c_api_client",
         "//xla/pjrt:pjrt_client",
-        "//xla/pjrt/cpu:cpu_client",
+        "//xla/pjrt:pjrt_common",
+        "//xla/pjrt/plugin:plugin_names",
+        "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/status:statusor",
     ],
 )
@@ -24,6 +27,7 @@ xla_cc_test(
     name = "xla_cpu_pjrt_client_test",
     srcs = ["xla_cpu_pjrt_client_test.cc"],
     deps = [
+        ":cpu_static_registration",
         ":xla_cpu_pjrt_client",
         "//xla/pjrt:pjrt_client",
         "//xla/pjrt/cpu:cpu_client",

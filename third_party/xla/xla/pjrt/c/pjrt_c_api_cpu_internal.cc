@@ -32,6 +32,7 @@ limitations under the License.
 #include "xla/pjrt/c/pjrt_c_api_phase_compile_extension.h"
 #include "xla/pjrt/c/pjrt_c_api_phase_compile_internal.h"
 #include "xla/pjrt/c/pjrt_c_api_wrapper_impl.h"
+#include "xla/pjrt/cpu/cpu_client.h"
 #include "xla/pjrt/pjrt_client.h"
 #include "xla/pjrt/pjrt_common.h"
 #include "xla/pjrt/pjrt_executable.h"
@@ -62,7 +63,7 @@ PJRT_Error* PJRT_Client_Create(PJRT_Client_Create_Args* args) {
   }
 
   PJRT_ASSIGN_OR_RETURN(std::unique_ptr<xla::PjRtClient> client,
-                        xla::GetXlaPjrtCpuClient(std::move(options)));
+                        xla::GetPjRtCpuClient(std::move(options)));
   args->client = pjrt::CreateWrapperClient(std::move(client));
   return nullptr;
 }
